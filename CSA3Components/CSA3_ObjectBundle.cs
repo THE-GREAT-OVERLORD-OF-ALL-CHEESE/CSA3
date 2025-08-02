@@ -10,20 +10,5 @@ namespace CheeseMods.CSA3Components
 
         [Tooltip("Prefabs to be included in your mod.")]
         public List<CSA3_CustomObject> customObjects;
-
-        /*
-        [ContextMenu("Build Bundle")]
-        public void BuildBundle()
-        {
-            string assetBundleDirectory = "Assets/AssetBundles";
-            if (!Directory.Exists(assetBundleDirectory))
-            {
-                Directory.CreateDirectory(assetBundleDirectory);
-            }
-            BuildPipeline.BuildAssetBundles(assetBundleDirectory,
-                                            BuildAssetBundleOptions.UncompressedAssetBundle,
-                                            BuildTarget.StandaloneWindows64);
-        }
-        */
     }
 }

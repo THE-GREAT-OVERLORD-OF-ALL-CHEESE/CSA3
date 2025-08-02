@@ -37,7 +37,6 @@ namespace CheeseMods.CSA3
                 foreach (VTMapEdPrefab prefab in VTMapEdResources.GetPrefabs(category))
                 {
                     baseMapObjects.Add(prefab.gameObject.name);
-                    //Debug.Log($"{category}: {prefab.gameObject.name}");
                 }
             }
 
