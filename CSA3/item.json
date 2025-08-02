@@ -1,0 +1,12 @@
+﻿{
+  "$schema": "https://gitlab.com/vtolvr-mods/ModLoader/-/raw/release/schema.json",
+  "Title": "CSA3",
+  "Description": "Thats right baby I'm making a third one",
+  "PreviewImageUrl": "https://vtolvr-mods.com/static/img/Logo.png",
+  "MetaData": {
+    "DllName": "CSA3.dll",
+    "AllowLoadOnStart": true,
+    "ShowOnMainList": true,
+    "DllHash": ""
+  }
+}

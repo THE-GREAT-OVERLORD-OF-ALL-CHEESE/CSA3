@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <OutputType>Library</OutputType>
+    <LangVersion>default</LangVersion>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CSA3Components\CSA3Components.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="0Harmony">
+      <HintPath>..\..\..\..\Managed\0Harmony.dll</HintPath>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>..\..\..\..\..\VTOLVR_Data\Managed\Assembly-CSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Mod Loader" Publicize="True">
+      <HintPath>..\..\..\..\Managed\Mod Loader.dll</HintPath>
+    </Reference>
+    <Reference Include="ModLoader.Framework">
+      <HintPath>..\..\..\..\Managed\ModLoader.Framework.dll</HintPath>
+    </Reference>
+    <Reference Include="SteamQueries.Models">
+      <HintPath>..\..\..\..\Managed\SteamQueries.Models.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.AssetBundleModule">
+      <HintPath>..\..\..\..\..\VTOLVR_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>..\..\..\..\..\VTOLVR_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>..\..\..\..\..\VTOLVR_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>..\..\..\..\..\VTOLVR_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+    </Reference>
+    <Reference Include="Valve.Newtonsoft.Json">
+      <HintPath>..\..\..\..\..\VTOLVR_Data\Managed\Valve.Newtonsoft.Json.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="xcopy &quot;$(ProjectDir)item.json&quot; &quot;D:\SteamLibrary\steamapps\common\VTOL VR\@Mod Loader\Mods\CSA3\&quot; /i /y&#xA;xcopy &quot;$(ProjectDir)\..\Editor&quot; &quot;D:\SteamLibrary\steamapps\common\VTOL VR\@Mod Loader\Mods\CSA3\Editor\&quot; /s /i /y &#xD;&#xA;xcopy &quot;$(TargetPath)&quot; &quot;D:\SteamLibrary\steamapps\common\VTOL VR\@Mod Loader\Mods\CSA3\&quot; /i /y" />
+  </Target>
+</Project>
