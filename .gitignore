@@ -133,4 +133,4 @@ $RECYCLE.BIN/
 _NCrunch*
 
 Other
-*.vsidx
+*.vs/

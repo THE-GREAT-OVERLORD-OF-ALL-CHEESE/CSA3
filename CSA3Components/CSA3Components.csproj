@@ -52,7 +52,6 @@
     <Compile Include="CSA3_ObjectBundle.cs" />
     <Compile Include="CSA3_CustomObject.cs" />
     <Compile Include="CSA3_MapObject.cs" />
-    <Compile Include="CSA3_Airbase.cs" />
     <Compile Include="CSA3_CustomUnit.cs" />
     <Compile Include="CSA3_StaticObject.cs" />
     <Compile Include="CSA3_VersionInfo.cs" />
