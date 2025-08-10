@@ -1,11 +1,6 @@
-﻿using RewiredConsts;
-using System;
+﻿using CheeeseMods.CSA3;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
-using static MFDSpecificObjects;
 
 namespace CheeseMods.CSA3
 {
@@ -16,9 +11,12 @@ namespace CheeseMods.CSA3
 
         public static List<string> baseUnits;
 
+        public static bool disableModdedObjects;
+
         public static void GetBaseAssetLists()
         {
             Debug.Log("CSA3: Getting base game assets.");
+            disableModdedObjects = true;
 
             Debug.Log("CSA3: Getting base game static object names.");
             baseStaticObjects = new List<string>();
@@ -50,6 +48,7 @@ namespace CheeseMods.CSA3
                     baseUnits.Add(unit.prefabName);
                 }
             }
+            disableModdedObjects = false;
         }
     }
 }

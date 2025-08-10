@@ -12,6 +12,11 @@ namespace CheeseMods.CSA3.Patches
         [HarmonyPostfix]
         static void Postfix(ref List<VTStaticObject> __result)
         {
+            if (BaseAssetInfo.disableModdedObjects)
+            {
+                return;
+            }
+
             __result.AddRange(AssetLoader.GetAllCustomObjects(CustomObjectType.StaticObject).Select(o => o.gameObject.GetComponent<VTStaticObject>()));
         }
     }
@@ -22,6 +27,12 @@ namespace CheeseMods.CSA3.Patches
         [HarmonyPrefix]
         static bool Prefix(out GameObject __result, string id)
         {
+            if (BaseAssetInfo.disableModdedObjects)
+            {
+                __result = null;
+                return true;
+            }
+
             ReplacementManager.GetReplacment(ref id);
 
             if (BaseAssetInfo.baseStaticObjects.Contains(id))

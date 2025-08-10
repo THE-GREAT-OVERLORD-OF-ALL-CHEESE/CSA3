@@ -222,6 +222,8 @@ namespace CheeseMods.CSA3
                     return bundle.customObjects.Where(o => o is CSA3_StaticObject staticObject).ToList();
                 case CustomObjectType.MapObject:
                     return bundle.customObjects.Where(o => o is CSA3_MapObject mapObject).ToList();
+                case CustomObjectType.CustomUnit:
+                    return bundle.customObjects.Where(o => o is CSA3_CustomUnit customUnit).ToList();
             }
 
             return null;
@@ -236,23 +238,11 @@ namespace CheeseMods.CSA3
             switch (customObjectType)
             {
                 case CustomObjectType.StaticObject:
-                    foreach (CSA3_CustomObject customObject in bundle.customObjects)
-                    {
-                        if (customObject is CSA3_StaticObject staticObject && staticObject.gameObject.name == id)
-                        {
-                            return staticObject;
-                        }
-                    }
-                    return null;
+                    return bundle.customObjects.FirstOrDefault(o => o is CSA3_StaticObject staticObject && staticObject.gameObject.name == id);
                 case CustomObjectType.MapObject:
-                    foreach (CSA3_CustomObject customObject in bundle.customObjects)
-                    {
-                        if (customObject is CSA3_MapObject mapObject && mapObject.gameObject.name == id)
-                        {
-                            return mapObject;
-                        }
-                    }
-                    return null;
+                    return bundle.customObjects.FirstOrDefault(o => o is CSA3_MapObject mapObject && mapObject.gameObject.name == id);
+                case CustomObjectType.CustomUnit:
+                    return bundle.customObjects.FirstOrDefault(o => o is CSA3_CustomUnit customUnit && customUnit.gameObject.name == id);
             }
 
             return null;
@@ -276,6 +266,22 @@ namespace CheeseMods.CSA3
                 {
                     ReportErrors(LocalAssetBundleErrors.MissingComponent,
                         $"A static object ({customObject.gameObject.name}) needs a {nameof(VTStaticObject)} component attached, please add one in unity.",
+                    Fault.BundleDev);
+                }
+                return;
+            }
+            if (customObject is CSA3_CustomUnit customUnit)
+            {
+                if (!customObject.gameObject.GetComponent<UnitSpawn>())
+                {
+                    ReportErrors(LocalAssetBundleErrors.MissingComponent,
+                        $"A custom ({customObject.gameObject.name}) needs a {nameof(UnitSpawn)} component attached, please add one in unity.",
+                    Fault.BundleDev);
+                }
+                if (!customObject.gameObject.GetComponent<Actor>())
+                {
+                    ReportErrors(LocalAssetBundleErrors.MissingComponent,
+                        $"A custom ({customObject.gameObject.name}) needs an {nameof(Actor)} component attached, please add one in unity.",
                     Fault.BundleDev);
                 }
                 return;
