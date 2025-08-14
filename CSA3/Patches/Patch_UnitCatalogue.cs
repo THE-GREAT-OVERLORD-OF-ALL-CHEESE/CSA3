@@ -4,7 +4,6 @@ using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
 
 namespace CheeseMods.CSA3.Patches
 {
@@ -49,7 +48,7 @@ namespace CheeseMods.CSA3.Patches
                 catalogueUnit.teamIdx = (int)team;
                 catalogueUnit.isPlayerSpawn = false;
                 catalogueUnit.hideFromEditor = false;
-                catalogueUnit.resourcePath = $"csa/units/{unit.name}";// im not implementing equipable weapons, i can't deal with, this someone else on github will have to make an implmentation if they want it
+                catalogueUnit.resourcePath = $"csa/units/{unit.name}"; // im not implementing equipable weapons, i can't deal with this, someone else on github will have to make an implmentation if they want it
 
                 UnitCatalogue.UnitTeam unitTeam = UnitCatalogue.catalogue[team];
 
@@ -130,7 +129,7 @@ namespace CheeseMods.CSA3.Patches
     class Patch_UnitCatalogue_GetUnit
     {
         [HarmonyPrefix]
-        static bool Prefix(ref UnitCatalogue.Unit __result, string unitID)
+        static bool Prefix(ref UnitCatalogue.Unit __result, ref string unitID)
         {
             if (BaseAssetInfo.disableModdedObjects)
             {
@@ -138,21 +137,6 @@ namespace CheeseMods.CSA3.Patches
             }
 
             ReplacementManager.GetReplacment(ref unitID);
-
-            if (BaseAssetInfo.baseMapObjects.Contains(unitID))
-            {
-                __result = null;
-                return true;
-            }
-
-            CSA3_CustomObject customObject = AssetLoader.GetCustomObject(CustomObjectType.CustomUnit, unitID);
-            if (customObject is CSA3_CustomUnit mapObject)
-            {
-                __result = mapObject.GetComponent<UnitCatalogue.Unit>();
-                return __result == null;
-            }
-
-            __result = null;
             return true;
         }
     }
