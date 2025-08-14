@@ -64,6 +64,9 @@ namespace CheeseMods.CSA3.Patches
                 catalogueUnit.categoryIdx = unitTeam.keys.IndexOf(unit.category);
                 catalogueUnit.unitIdx = category.keys.Count - 1;
 
+                UnitCatalogue.unitPrefabs.Add(unit.name, customObject.gameObject);
+                UnitCatalogue.units.Add(unit.name, catalogueUnit);
+                UnitCatalogue.catalogue[team].allUnits.Add(catalogueUnit);
 
                 Debug.Log("updating lists and dictionaries");
                 if (category.units.ContainsKey(unit.name) == false)

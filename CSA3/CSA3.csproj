@@ -18,7 +18,7 @@
     <Reference Include="0Harmony">
       <HintPath>..\..\..\..\Managed\0Harmony.dll</HintPath>
     </Reference>
-    <Reference Include="Assembly-CSharp">
+    <Reference Include="Assembly-CSharp" Publicize = "True">
       <HintPath>..\..\..\..\..\VTOLVR_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Mod Loader" Publicize="True">
