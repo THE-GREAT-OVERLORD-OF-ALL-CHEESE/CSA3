@@ -21,7 +21,7 @@
 
         public static int Major => 3;
         public static int Minor => 0;
-        public static int Patch => 4;
+        public static int Patch => 7;
 
         public static VersionNumber CurrentVersion => new VersionNumber(Major, Minor, Patch);
     }

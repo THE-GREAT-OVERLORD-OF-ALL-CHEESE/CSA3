@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using Valve.Newtonsoft.Json;
+using VTNetworking;
 using static CheeseMods.CSA3.LocalAssetBundle;
 
 namespace CheeseMods.CSA3
@@ -179,6 +180,8 @@ namespace CheeseMods.CSA3
             foreach (CSA3_CustomObject customObject in bundle.customObjects)
             {
                 ValidateAssets(customObject);
+                
+                BuiltMixerFixer.FixAudioSourcesInChildren(customObject.gameObject);
 
                 CSA3_Replacement replacement = customObject.gameObject.GetComponent<CSA3_Replacement>();
                 if (replacement != null)
@@ -186,6 +189,46 @@ namespace CheeseMods.CSA3
                     foreach (string target in replacement.targets)
                     {
                         ReplacementManager.TryAddReplacment(target, customObject);
+                    }
+                }
+
+                CustomObjectType customObjectType = GetCustomObjectType(customObject);
+                if (customObjectType == CustomObjectType.CustomUnit)
+                {
+                    var unit = customObject.GetComponent<UnitSpawn>();
+                    
+                    string resourcePath = $"csa/units/{customObject.name}";
+                    
+                    VTResources.RegisterOverriddenResource(resourcePath, customObject.gameObject);
+                    VTNetworkManager.RegisterOverrideResource(resourcePath, customObject.gameObject);
+                    
+                    SetupTargetIdentity(customObject, unit);
+                    
+                    if (unit is AIUnitSpawnEquippable aiUnitSpawnEquippable)
+                    {
+                        var wm = aiUnitSpawnEquippable.GetComponent<WeaponManager>();
+                        if (wm)
+                            wm.resourcePath = "csa/equips";
+                        
+                        foreach (var equipPrefab in aiUnitSpawnEquippable.equipPrefabs)
+                        {
+                            string eqResourcePath = $"csa/equips/{equipPrefab.name}";
+                            
+                            VTResources.RegisterOverriddenResource(eqResourcePath, equipPrefab.gameObject);
+                            VTNetworkManager.RegisterOverrideResource(eqResourcePath, equipPrefab.gameObject);
+
+                            var hpEquipMl = equipPrefab.GetComponent<HPEquipMissileLauncher>();
+                            if (hpEquipMl)
+                            {
+                                var missilePrefab = hpEquipMl.ml.missilePrefab;
+                                string missileResourcePath = $"csa/missiles/{missilePrefab.name}";
+                                VTResources.RegisterOverriddenResource(missileResourcePath, missilePrefab);
+                                VTNetworkManager.RegisterOverrideResource(missileResourcePath, missilePrefab);
+                                hpEquipMl.missileResourcePath = missileResourcePath;
+                                
+                                SetupTargetIdentity(missilePrefab);
+                            }
+                        }
                     }
                 }
             }
@@ -222,6 +265,8 @@ namespace CheeseMods.CSA3
                     return bundle.customObjects.Where(o => o is CSA3_StaticObject staticObject).ToList();
                 case CustomObjectType.MapObject:
                     return bundle.customObjects.Where(o => o is CSA3_MapObject mapObject).ToList();
+                case CustomObjectType.CustomUnit:
+                    return bundle.customObjects.Where(o => o is CSA3_CustomUnit customUnit).ToList();
             }
 
             return null;
@@ -236,26 +281,29 @@ namespace CheeseMods.CSA3
             switch (customObjectType)
             {
                 case CustomObjectType.StaticObject:
-                    foreach (CSA3_CustomObject customObject in bundle.customObjects)
-                    {
-                        if (customObject is CSA3_StaticObject staticObject && staticObject.gameObject.name == id)
-                        {
-                            return staticObject;
-                        }
-                    }
-                    return null;
+                    return bundle.customObjects.FirstOrDefault(o => o is CSA3_StaticObject staticObject && staticObject.gameObject.name == id);
                 case CustomObjectType.MapObject:
-                    foreach (CSA3_CustomObject customObject in bundle.customObjects)
-                    {
-                        if (customObject is CSA3_MapObject mapObject && mapObject.gameObject.name == id)
-                        {
-                            return mapObject;
-                        }
-                    }
-                    return null;
+                    return bundle.customObjects.FirstOrDefault(o => o is CSA3_MapObject mapObject && mapObject.gameObject.name == id);
+                case CustomObjectType.CustomUnit:
+                    return bundle.customObjects.FirstOrDefault(o => o is CSA3_CustomUnit customUnit && customUnit.gameObject.name == id);
             }
 
             return null;
+        }
+
+        public static CustomObjectType GetCustomObjectType(CSA3_CustomObject customObject)
+        {
+            if (customObject == null)
+                return CustomObjectType.StaticObject;
+            
+            if (customObject is CSA3_MapObject)
+                return CustomObjectType.MapObject;
+            if (customObject is CSA3_StaticObject)
+                return CustomObjectType.StaticObject;
+            if (customObject is CSA3_CustomUnit)
+                return CustomObjectType.CustomUnit;
+            
+            return CustomObjectType.StaticObject;
         }
 
         public void ValidateAssets(CSA3_CustomObject customObject)
@@ -280,10 +328,78 @@ namespace CheeseMods.CSA3
                 }
                 return;
             }
+            if (customObject is CSA3_CustomUnit customUnit)
+            {
+                if (!customObject.gameObject.GetComponent<UnitSpawn>())
+                {
+                    ReportErrors(LocalAssetBundleErrors.MissingComponent,
+                        $"A custom ({customObject.gameObject.name}) needs a {nameof(UnitSpawn)} component attached, please add one in unity.",
+                    Fault.BundleDev);
+                }
+                if (!customObject.gameObject.GetComponent<Actor>())
+                {
+                    ReportErrors(LocalAssetBundleErrors.MissingComponent,
+                        $"A custom ({customObject.gameObject.name}) needs an {nameof(Actor)} component attached, please add one in unity.",
+                    Fault.BundleDev);
+                }
+                return;
+            }
 
             ReportErrors(LocalAssetBundleErrors.UnsupportedCustomAssetType,
                 $"Support for {customObject.GetType()} assets has not been added, beg me to add it on Discord.",
             Fault.Cheese);
+        }
+        
+        
+
+        private void SetupTargetIdentity(CSA3_CustomObject customObject, UnitSpawn unit)
+        {
+            var unitID = customObject.GetComponent<UnitIDIdentifier>();
+            if (!unitID)
+            {
+                unitID = customObject.gameObject.AddComponent<UnitIDIdentifier>();
+
+                unitID.targetName = unit.unitName;
+                unitID.unitID = $"csa.{unit.name}";
+                Actor.Roles role = Actor.Roles.Ground;
+
+                switch (unit.groupType)
+                {
+                    case VTUnitGroup.GroupTypes.Ground:
+                        role = Actor.Roles.Ground;
+                        break;
+                    case VTUnitGroup.GroupTypes.Air:
+                        role = Actor.Roles.Air;
+                        break;
+                    case VTUnitGroup.GroupTypes.Sea:
+                        role = Actor.Roles.Ship;
+                        break;
+                }
+
+                unitID.role = role;
+            }
+
+            TargetIdentity targetIdentity = TargetIdentityManager.RegisterNonSpawnIdentity(unitID.unitID, unitID.targetName, unitID.role);
+            if (!TargetIdentityManager.indexedIdentities.Contains(targetIdentity))
+                TargetIdentityManager.indexedIdentities.Add(targetIdentity);
+        }
+
+        private void SetupTargetIdentity(GameObject missile)
+        {
+            var unitID = missile.GetComponent<UnitIDIdentifier>();
+            if (!unitID)
+            {
+                unitID = missile.gameObject.AddComponent<UnitIDIdentifier>();
+
+                unitID.targetName = missile.name;
+                unitID.unitID = $"csa.missile.{missile.name}";
+
+                unitID.role = Actor.Roles.Missile;
+            }
+
+            TargetIdentity targetIdentity = TargetIdentityManager.RegisterNonSpawnIdentity(unitID.unitID, unitID.targetName, unitID.role);
+            if (!TargetIdentityManager.indexedIdentities.Contains(targetIdentity))
+                TargetIdentityManager.indexedIdentities.Add(targetIdentity);
         }
     }
 }

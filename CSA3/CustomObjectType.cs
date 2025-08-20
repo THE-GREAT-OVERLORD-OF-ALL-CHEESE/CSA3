@@ -3,6 +3,7 @@
     public enum CustomObjectType
     {
         StaticObject,
-        MapObject
+        MapObject,
+        CustomUnit
     }
 }

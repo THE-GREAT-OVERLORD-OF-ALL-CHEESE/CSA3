@@ -80,8 +80,6 @@ class CSA3_ObjectBundleEditor : Editor
                 if (customObject.gameObject.name != expectedName)
                 {
                     AssetDatabase.RenameAsset(AssetDatabase.GetAssetPath(customObject.gameObject), expectedName);
-
-                    return;
                 }
 
                 if (!customObject.displayName.Any())

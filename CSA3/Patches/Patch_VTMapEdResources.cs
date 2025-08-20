@@ -12,6 +12,11 @@ namespace CheeseMods.CSA3.Patches
         [HarmonyPostfix]
         static void Postfix(ref List<string> __result)
         {
+            if (BaseAssetInfo.disableModdedObjects)
+            {
+                return;
+            }
+
             __result.AddRange(AssetLoader.GetAllCustomObjects(CustomObjectType.MapObject).Select(o => o.gameObject.GetComponent<VTMapEdPrefab>().category).Distinct());
 
             __result = __result.Distinct().ToList();
@@ -24,6 +29,11 @@ namespace CheeseMods.CSA3.Patches
         [HarmonyPostfix]
         static void Postfix(ref VTMapEdPrefab[] __result, string category)
         {
+            if (BaseAssetInfo.disableModdedObjects)
+            {
+                return;
+            }
+
             List<VTMapEdPrefab> prefabs = new List<VTMapEdPrefab>();
             if (__result != null)
             {
@@ -44,6 +54,12 @@ namespace CheeseMods.CSA3.Patches
         [HarmonyPrefix]
         static bool Prefix(out VTMapEdPrefab __result, string id)
         {
+            if (BaseAssetInfo.disableModdedObjects)
+            {
+                __result = null;
+                return true;
+            }
+
             ReplacementManager.GetReplacment(ref id);
 
             if (BaseAssetInfo.baseMapObjects.Contains(id))
