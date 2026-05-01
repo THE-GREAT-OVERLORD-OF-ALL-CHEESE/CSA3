@@ -6,7 +6,6 @@ using System.Linq;
 using UnityEngine;
 using Valve.Newtonsoft.Json;
 using VTNetworking;
-using static CheeseMods.CSA3.LocalAssetBundle;
 
 namespace CheeseMods.CSA3
 {
@@ -27,6 +26,7 @@ namespace CheeseMods.CSA3
             MissingDependancies = 1 << 8,
             MissingComponent = 1 << 9,
             UnsupportedCustomAssetType = 1 << 10,
+            InvalidDependancy = 1 << 11,
         }
 
         public enum Fault
@@ -124,6 +124,14 @@ namespace CheeseMods.CSA3
                 {
                     if (ulong.TryParse(dependency.workshopId, out ulong result))
                     {
+                        if (result == Consts.steamworkshopId)
+                        {
+                            ReportErrors(LocalAssetBundleErrors.InvalidDependancy,
+                                $"Illegal dependancy {result}, please tell the dev to edit the mod metadata to not reference CSA3",
+                                Fault.BundleDev);
+                            return;
+                        }
+
                         if (DependancyLoader.Load(result))
                         {
                             Debug.Log($"CSA3: Loaded dependancy {result}");
@@ -195,7 +203,7 @@ namespace CheeseMods.CSA3
                 CustomObjectType customObjectType = GetCustomObjectType(customObject);
                 if (customObjectType == CustomObjectType.CustomUnit)
                 {
-                    var unit = customObject.GetComponent<UnitSpawn>();
+                    UnitSpawn unit = customObject.GetComponent<UnitSpawn>();
                     
                     string resourcePath = $"csa/units/{customObject.name}";
                     
@@ -206,21 +214,21 @@ namespace CheeseMods.CSA3
                     
                     if (unit is AIUnitSpawnEquippable aiUnitSpawnEquippable)
                     {
-                        var wm = aiUnitSpawnEquippable.GetComponent<WeaponManager>();
+                        WeaponManager wm = aiUnitSpawnEquippable.GetComponent<WeaponManager>();
                         if (wm)
                             wm.resourcePath = "csa/equips";
                         
-                        foreach (var equipPrefab in aiUnitSpawnEquippable.equipPrefabs)
+                        foreach (GameObject equipPrefab in aiUnitSpawnEquippable.equipPrefabs)
                         {
                             string eqResourcePath = $"csa/equips/{equipPrefab.name}";
                             
                             VTResources.RegisterOverriddenResource(eqResourcePath, equipPrefab.gameObject);
                             VTNetworkManager.RegisterOverrideResource(eqResourcePath, equipPrefab.gameObject);
 
-                            var hpEquipMl = equipPrefab.GetComponent<HPEquipMissileLauncher>();
+                            HPEquipMissileLauncher hpEquipMl = equipPrefab.GetComponent<HPEquipMissileLauncher>();
                             if (hpEquipMl)
                             {
-                                var missilePrefab = hpEquipMl.ml.missilePrefab;
+                                GameObject missilePrefab = hpEquipMl.ml.missilePrefab;
                                 string missileResourcePath = $"csa/missiles/{missilePrefab.name}";
                                 VTResources.RegisterOverriddenResource(missileResourcePath, missilePrefab);
                                 VTNetworkManager.RegisterOverrideResource(missileResourcePath, missilePrefab);
@@ -294,7 +302,7 @@ namespace CheeseMods.CSA3
         public static CustomObjectType GetCustomObjectType(CSA3_CustomObject customObject)
         {
             if (customObject == null)
-                return CustomObjectType.StaticObject;
+                return CustomObjectType.InvalidType;
             
             if (customObject is CSA3_MapObject)
                 return CustomObjectType.MapObject;
@@ -303,7 +311,7 @@ namespace CheeseMods.CSA3
             if (customObject is CSA3_CustomUnit)
                 return CustomObjectType.CustomUnit;
             
-            return CustomObjectType.StaticObject;
+            return CustomObjectType.InvalidType;
         }
 
         public void ValidateAssets(CSA3_CustomObject customObject)
@@ -314,7 +322,7 @@ namespace CheeseMods.CSA3
                 {
                     ReportErrors(LocalAssetBundleErrors.MissingComponent,
                         $"A map object ({customObject.gameObject.name}) needs a {nameof(VTMapEdPrefab)} component attached, please add one in unity.",
-                    Fault.BundleDev);
+                        Fault.BundleDev);
                 }
                 return;
             }
@@ -324,7 +332,7 @@ namespace CheeseMods.CSA3
                 {
                     ReportErrors(LocalAssetBundleErrors.MissingComponent,
                         $"A static object ({customObject.gameObject.name}) needs a {nameof(VTStaticObject)} component attached, please add one in unity.",
-                    Fault.BundleDev);
+                        Fault.BundleDev);
                 }
                 return;
             }
@@ -334,27 +342,25 @@ namespace CheeseMods.CSA3
                 {
                     ReportErrors(LocalAssetBundleErrors.MissingComponent,
                         $"A custom ({customObject.gameObject.name}) needs a {nameof(UnitSpawn)} component attached, please add one in unity.",
-                    Fault.BundleDev);
+                        Fault.BundleDev);
                 }
                 if (!customObject.gameObject.GetComponent<Actor>())
                 {
                     ReportErrors(LocalAssetBundleErrors.MissingComponent,
                         $"A custom ({customObject.gameObject.name}) needs an {nameof(Actor)} component attached, please add one in unity.",
-                    Fault.BundleDev);
+                        Fault.BundleDev);
                 }
                 return;
             }
 
             ReportErrors(LocalAssetBundleErrors.UnsupportedCustomAssetType,
                 $"Support for {customObject.GetType()} assets has not been added, beg me to add it on Discord.",
-            Fault.Cheese);
+                Fault.Cheese);
         }
         
-        
-
         private void SetupTargetIdentity(CSA3_CustomObject customObject, UnitSpawn unit)
         {
-            var unitID = customObject.GetComponent<UnitIDIdentifier>();
+            UnitIDIdentifier unitID = customObject.gameObject.GetComponent<UnitIDIdentifier>();
             if (!unitID)
             {
                 unitID = customObject.gameObject.AddComponent<UnitIDIdentifier>();
@@ -386,7 +392,7 @@ namespace CheeseMods.CSA3
 
         private void SetupTargetIdentity(GameObject missile)
         {
-            var unitID = missile.GetComponent<UnitIDIdentifier>();
+            UnitIDIdentifier unitID = missile.GetComponent<UnitIDIdentifier>();
             if (!unitID)
             {
                 unitID = missile.gameObject.AddComponent<UnitIDIdentifier>();

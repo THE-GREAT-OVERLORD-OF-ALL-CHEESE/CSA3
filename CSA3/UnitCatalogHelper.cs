@@ -1,4 +1,4 @@
-﻿namespace CheeeseMods.CSA3
+﻿namespace CheeseMods.CSA3
 {
     public static class UnitCatalogHelper
     {

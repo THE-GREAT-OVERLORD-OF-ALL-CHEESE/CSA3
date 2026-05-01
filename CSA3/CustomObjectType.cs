@@ -2,6 +2,7 @@
 {
     public enum CustomObjectType
     {
+        InvalidType,
         StaticObject,
         MapObject,
         CustomUnit

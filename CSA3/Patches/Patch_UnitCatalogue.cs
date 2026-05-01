@@ -1,5 +1,4 @@
-﻿using CheeeseMods.CSA3;
-using CheeseMods.CSA3Components;
+﻿using CheeseMods.CSA3Components;
 using HarmonyLib;
 using System;
 using System.Collections.Generic;

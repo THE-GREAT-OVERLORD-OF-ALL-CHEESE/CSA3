@@ -37,6 +37,14 @@ namespace CheeseMods.CSA3.Patches
 
             if (BaseAssetInfo.baseStaticObjects.Contains(id))
             {
+                // Asset was a base game
+                __result = null;
+                return true;
+            }
+            VTResources.LoadStaticObjectPrefabs();
+            if (VTResources.vtEditStaticObjectPrefabs.ContainsKey(id))
+            {
+                // Asset was a CSO
                 __result = null;
                 return true;
             }
@@ -44,6 +52,7 @@ namespace CheeseMods.CSA3.Patches
             CSA3_CustomObject customObject = AssetLoader.GetCustomObject(CustomObjectType.StaticObject, id);
             if (customObject is CSA3_StaticObject staticObject)
             {
+                // CSA3 Static Object
                 __result = staticObject.gameObject;
                 return false;
             }
@@ -51,6 +60,7 @@ namespace CheeseMods.CSA3.Patches
             customObject = AssetLoader.GetCustomObject(CustomObjectType.StaticObject, Consts.staticObjectFailsafeId);
             if (customObject is CSA3_StaticObject staticObject2)
             {
+                // Failsafe
                 __result = staticObject2.gameObject;
                 return false;
             }
