@@ -1,5 +1,8 @@
 ﻿using CheeseMods.CSA3Components;
+using CheeseMods.VTOLTaskProgressUI;
+using Cysharp.Threading.Tasks;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -109,19 +112,24 @@ namespace CheeseMods.CSA3
             }
         }
 
-        private void LoadAssetBundle(FileInfo file)
+        private IEnumerator LoadAssetBundle(FileInfo file)
         {
-            Debug.Log($"CSA3: Trying to load {Name}");
+            TaskInfo task = VTOLTaskProgressManager.RegisterTask(Main.instance, $"CSA3: Loading {Name}");
+
+            UnityEngine.Debug.Log($"CSA3: Trying to load {Name}");
 
             if (errors != LocalAssetBundleErrors.NoErrors)
             {
-                Debug.Log($"CSA3: Refusing to load {Name} as it has errors...");
-                return;
+                UnityEngine.Debug.Log($"CSA3: Refusing to load {Name} as it has errors...");
+                task.FinishTask("Failed");
+                yield break;
             }
 
+            task.SetStatus("Loading Dependancies");
             if (metaData.dependencies != null) {
                 foreach (CSA3_Dependency dependency in metaData.dependencies)
                 {
+                    TaskInfo dependancyTask = VTOLTaskProgressManager.RegisterTask(Main.instance, $"CSA3: Loading Dependancy of {Name} ({dependency.workshopId})");
                     if (ulong.TryParse(dependency.workshopId, out ulong result))
                     {
                         if (result == Consts.steamworkshopId)
@@ -129,18 +137,28 @@ namespace CheeseMods.CSA3
                             ReportErrors(LocalAssetBundleErrors.InvalidDependancy,
                                 $"Illegal dependancy {result}, please tell the dev to edit the mod metadata to not reference CSA3",
                                 Fault.BundleDev);
-                            return;
+                            dependancyTask.FinishTask();
+                            task.FinishTask("Failed");
+                            yield break;
                         }
 
-                        if (DependancyLoader.Load(result))
+                        UniTask<bool> loadResult = DependancyLoader.Load(result, dependancyTask);
+                        while (loadResult.Status != UniTaskStatus.Succeeded)
                         {
-                            Debug.Log($"CSA3: Loaded dependancy {result}");
+                            yield return null;
+                        }
+
+                        if (loadResult.result)
+                        {
+                            UnityEngine.Debug.Log($"CSA3: Loaded dependancy {result}");
+                            dependancyTask.FinishTask();
                         }
                         else
                         {
                             ReportErrors(LocalAssetBundleErrors.MissingDependancies,
                                 $"Couldn't load mod depedancy {result}, please check your dependancies!",
                             Fault.UserError);
+                            dependancyTask.FinishTask("Failed");
                         }
                     }
                     else
@@ -148,6 +166,7 @@ namespace CheeseMods.CSA3
                         ReportErrors(LocalAssetBundleErrors.MetaDataReadFail,
                             $"Couldn't parse dependancy ID, failed to load dependancies!",
                         Fault.BundleDev);
+                        dependancyTask.FinishTask("Failed");
                     }
                 }
             }
@@ -156,39 +175,57 @@ namespace CheeseMods.CSA3
                 Debug.Log("CSA3: No dependanices? Suspicious...");
             }
 
-            assetBundle = AssetBundle.LoadFromFile(file.FullName);
+            task.SetStatus("Loading AssetBundle");
+            AssetBundleCreateRequest request = AssetBundle.LoadFromFileAsync(file.FullName);
+            while (!request.isDone)
+            {
+                task.SetProgress(Mathf.Lerp(0f, 0.5f, request.progress));
+                yield return null;
+            }
+            assetBundle = request.assetBundle;
 
             if (assetBundle == null)
             {
                 ReportErrors(LocalAssetBundleErrors.AssetBundleLoadFail,
                     $"Unable to load asset bundle.",
                 Fault.BundleDev);
-                return;
+                task.FinishTask("Failed");
+                yield break;
             }
 
-            UnityEngine.Object[] bundles = assetBundle.LoadAllAssets(typeof(CSA3_ObjectBundle));
+            task.SetStatus("Loading Assets");
+            AssetBundleRequest request2 = assetBundle.LoadAllAssetsAsync(typeof(CSA3_ObjectBundle));
+            while (!request2.isDone)
+            {
+                task.SetProgress(Mathf.Lerp(0.5f, 0.9f, request2.progress));
+                yield return null;
+            }
+            UnityEngine.Object[] bundles = request2.allAssets;
 
             if (bundles.Length == 0)
             {
                 ReportErrors(LocalAssetBundleErrors.NoBundle,
                     $"No CSA3_ObjectBundle in Asset Bundle",
                 Fault.BundleDev);
-                return;
+                task.FinishTask("Failed");
+                yield break;
             }
             if (bundles.Length > 1)
             {
                 ReportErrors(LocalAssetBundleErrors.MoreThanOneBundle,
                     $"More than one CSA3_ObjectBundle in Asset Bundle",
                 Fault.BundleDev);
-                return;
+                task.FinishTask("Failed");
+                yield break;
             }
 
             bundle = bundles.First() as CSA3_ObjectBundle;
 
+            task.SetStatus("Processing Assets");
             foreach (CSA3_CustomObject customObject in bundle.customObjects)
             {
                 ValidateAssets(customObject);
-                
+
                 BuiltMixerFixer.FixAudioSourcesInChildren(customObject.gameObject);
 
                 CSA3_Replacement replacement = customObject.gameObject.GetComponent<CSA3_Replacement>();
@@ -242,12 +279,13 @@ namespace CheeseMods.CSA3
             }
 
             Debug.Log($"CSA3: {Name} loaded!");
+            task.FinishTask();
         }
 
-        public void Load()
+        public IEnumerator Load()
         {
             Unload();
-            LoadAssetBundle(bundleFile);
+            yield return LoadAssetBundle(bundleFile);
         }
 
         public void Unload()

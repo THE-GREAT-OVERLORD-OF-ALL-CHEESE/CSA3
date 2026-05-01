@@ -1,7 +1,10 @@
 ﻿using CheeseMods.CSA3Components;
+using CheeseMods.VTOLTaskProgressUI;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Xml.Linq;
 using UnityEngine;
 
 namespace CheeseMods.CSA3
@@ -44,12 +47,17 @@ namespace CheeseMods.CSA3
             }
         }
 
-        public static void LoadAssets()
+        public static IEnumerator LoadAssets()
         {
+            TaskInfo task = VTOLTaskProgressManager.RegisterTask(Main.instance, $"CSA3: Loading assets");
+            int assetBundleNumber = 0;
             foreach (LocalAssetBundle localAssetBundle in localAssetBundles)
             {
-                localAssetBundle.Load();
+                task.SetProgress((float)assetBundleNumber / (float)localAssetBundles.Count);
+                yield return localAssetBundle.Load();
+                assetBundleNumber++;
             }
+            task.FinishTask();
         }
 
         public static void UnloadAssets()

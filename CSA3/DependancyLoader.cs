@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using CheeseMods.VTOLTaskProgressUI;
+using Cysharp.Threading.Tasks;
 using SteamQueries.Models;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,7 +9,7 @@ namespace CheeseMods.CSA3
 {
     public static class DependancyLoader
     {
-        public static bool Load(ulong id)
+        public static async UniTask<bool> Load(ulong id, TaskInfo taskInfo)
         {
             if (ModLoader.ModLoader.Instance._loadedItems.Any(i => i.Value.Item.PublishFieldId == id))
             {
@@ -17,16 +18,13 @@ namespace CheeseMods.CSA3
             }
 
             Debug.Log($"CSA3: Checking local mods for {id}");
-            foreach (SteamItem item2 in ModLoader.ModLoader.Instance.FindLocalItems())
-            {
-                Debug.Log($"{item2.Title} - {item2.PublishFieldId}");
-            }
 
             SteamItem item = ModLoader.ModLoader.Instance.FindLocalItems().ToArray().FirstOrDefault(i => i.PublishFieldId == id);
             if (item == null)
             {
+                taskInfo.SetStatus("Searching for dependancies...");
                 Debug.Log($"CSA3: Checking steam mods for {id}");
-                item = FindSteamItems().FirstOrDefault(i => i.PublishFieldId == id);
+                item = (await FindSteamItems(taskInfo)).FirstOrDefault(i => i.PublishFieldId == id);
             }
             if (item == null)
             {
@@ -35,11 +33,13 @@ namespace CheeseMods.CSA3
             }
 
             Debug.Log($"CSA3: Loading dependancy {id}");
-            ModLoader.ModLoader.Instance.LoadSteamItem(item);
+            taskInfo.SetStatus("Loading for dependancies...");
+            taskInfo.SetProgress(0.9f);
+            await ModLoader.ModLoader.Instance.LoadSteamItem(item);
             return true;
         }
 
-        public static IReadOnlyCollection<SteamItem> FindSteamItems()
+        public static async UniTask<IReadOnlyCollection<SteamItem>> FindSteamItems(TaskInfo taskInfo)
         {
             Debug.Log("CSA3: finding steam items...");
 
@@ -49,7 +49,11 @@ namespace CheeseMods.CSA3
 
             while (currentPage < maxPages)
             {
+                Debug.Log($"Searching mods: page {currentPage}");
+                taskInfo.SetStatus($"Searching mods: page {currentPage}");
+                taskInfo.SetProgress((1f - (1f/ currentPage)) * 0.9f);
                 UniTask<GetSubscribedItemsResponse> pageResults = ModLoader.SteamQuery.SteamQueries.Instance.GetSubscribedItems(currentPage);
+                await pageResults;
                 if (pageResults.result == null)
                 {
                     Debug.Log("pageResults were null");
