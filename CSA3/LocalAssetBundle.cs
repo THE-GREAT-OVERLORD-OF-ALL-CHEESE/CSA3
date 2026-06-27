@@ -424,6 +424,19 @@ namespace CheeseMods.CSA3
             }
 
             TargetIdentity targetIdentity = TargetIdentityManager.RegisterNonSpawnIdentity(unitID.unitID, unitID.targetName, unitID.role);
+            if (customObject is CSA3_CustomUnit customUnit)
+            {
+                try
+                {
+                    targetIdentity.index = customUnit.customUnitTargetIndex;
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError("Old Version of CSA CustomUnit, ask Mod author to update the CSA3Components " +
+                                   "DLL in their unity project. \n Exception: "+e);
+                    targetIdentity.index = 0;
+                }
+            }
             if (!TargetIdentityManager.indexedIdentities.Contains(targetIdentity))
                 TargetIdentityManager.indexedIdentities.Add(targetIdentity);
         }
