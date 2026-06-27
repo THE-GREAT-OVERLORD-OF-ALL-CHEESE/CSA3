@@ -29,8 +29,8 @@ namespace CheeseMods.CSA3
             MissingDependancies = 1 << 8,
             MissingComponent = 1 << 9,
             UnsupportedCustomAssetType = 1 << 10,
-            InvalidDependancy = 1 << 11,
-            
+            InvalidDependancy = 1 << 11, 
+            MissingEquipment = 1 << 12,
             OldDLLVersion =  1 << 13,
         }
 
@@ -259,6 +259,15 @@ namespace CheeseMods.CSA3
                         
                         foreach (GameObject equipPrefab in aiUnitSpawnEquippable.equipPrefabs)
                         {
+                            if (equipPrefab == null)
+                            {
+                                ReportErrors(LocalAssetBundleErrors.MissingEquipment,
+                                    $"AIUnitSpawn on {unit.name} has missing equipment prefabs",
+                                Fault.BundleDev);
+                                task.FinishTask("Failed");
+                                yield break;
+                            }
+
                             string eqResourcePath = $"csa/equips/{equipPrefab.name}";
                             
                             VTResources.RegisterOverriddenResource(eqResourcePath, equipPrefab.gameObject);
