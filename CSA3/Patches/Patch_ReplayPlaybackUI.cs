@@ -23,7 +23,8 @@ public class Patch_ReplayPlaybackUI
         });
         component.entityLabel.text = entity.metaData.label;
         component.entityLabel.color = __instance.teamColors[(int)teams];
-        component.entityIdentity.text = entity.metaData.label;
+        var entityIdentity = TargetIdentityManager.GetIdentity(entity.metaData.identity);
+        component.entityIdentity.text = entityIdentity != null ? entityIdentity.targetName : entity.metaData.label;
         var num = ((RectTransform)__instance.followUnitTemplate.transform).rect.height * __instance.followUnitTemplate.transform.localScale.y;
         gameObject.transform.localPosition = new Vector3(0f, -num * __instance.followableEnts.Count, 0f);
         __instance.followableEnts.Add(entity);
