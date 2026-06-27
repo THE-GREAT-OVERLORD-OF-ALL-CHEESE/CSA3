@@ -30,6 +30,8 @@ namespace CheeseMods.CSA3
             MissingComponent = 1 << 9,
             UnsupportedCustomAssetType = 1 << 10,
             InvalidDependancy = 1 << 11,
+            
+            OldDLLVersion =  1 << 13,
         }
 
         public enum Fault
@@ -430,10 +432,9 @@ namespace CheeseMods.CSA3
                 {
                     targetIdentity.index = customUnit.customUnitTargetIndex;
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
-                    Debug.LogError("Old Version of CSA CustomUnit, ask Mod author to update the CSA3Components " +
-                                   "DLL in their unity project. \n Exception: "+e);
+                    ReportErrors(LocalAssetBundleErrors.OldDLLVersion, "Ask the Mod author to update their CSA3Components DLL in their Unity project", Fault.BundleDev);
                     targetIdentity.index = 0;
                 }
             }
