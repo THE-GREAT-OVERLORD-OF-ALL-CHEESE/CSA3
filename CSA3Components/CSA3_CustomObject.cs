@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace CheeseMods.CSA3Components
 {
@@ -9,12 +7,12 @@ namespace CheeseMods.CSA3Components
         [Tooltip("Autopopulated, don't worry about it")]
         public CSA3_ObjectBundle parentBundle;
 
-        [Tooltip("Disaply name of your asset")]
+        [Tooltip("Display name of your asset")]
         public string displayName;
-        [Tooltip("id for uniquely identifying your asset. " + CSA3_BundleMetadata.namingRules)]
+        [Tooltip("Dd for uniquely identifying your asset. " + CSA3_BundleMetadata.namingRules)]
         public string objectId;
         [TextArea]
-        [Tooltip("Discription of your asset")]
+        [Tooltip("Description of your asset")]
         public string description;
     }
 }

@@ -29,8 +29,9 @@ namespace CheeseMods.CSA3
             MissingDependancies = 1 << 8,
             MissingComponent = 1 << 9,
             UnsupportedCustomAssetType = 1 << 10,
-            InvalidDependancy = 1 << 11,
+            InvalidDependancy = 1 << 11, 
             MissingEquipment = 1 << 12,
+            OldDLLVersion =  1 << 13,
         }
 
         public enum Fault
@@ -434,6 +435,18 @@ namespace CheeseMods.CSA3
             }
 
             TargetIdentity targetIdentity = TargetIdentityManager.RegisterNonSpawnIdentity(unitID.unitID, unitID.targetName, unitID.role);
+            if (customObject is CSA3_CustomUnit customUnit)
+            {
+                try
+                {
+                    targetIdentity.index = customUnit.customUnitTargetIndex;
+                }
+                catch (Exception)
+                {
+                    ReportErrors(LocalAssetBundleErrors.OldDLLVersion, "Ask the Mod author to update their CSA3Components DLL in their Unity project", Fault.BundleDev);
+                    targetIdentity.index = 0;
+                }
+            }
             if (!TargetIdentityManager.indexedIdentities.Contains(targetIdentity))
                 TargetIdentityManager.indexedIdentities.Add(targetIdentity);
         }

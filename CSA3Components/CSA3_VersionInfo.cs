@@ -20,8 +20,8 @@
         }
 
         public static int Major => 3;
-        public static int Minor => 0;
-        public static int Patch => 8;
+        public static int Minor => 1;
+        public static int Patch => 0;
 
         public static VersionNumber CurrentVersion => new VersionNumber(Major, Minor, Patch);
     }

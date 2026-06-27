@@ -7,7 +7,7 @@ using UnityEditor;
 using UnityEngine;
 
 [CustomEditor(typeof(CSA3_ObjectBundle))]
-class CSA3_ObjectBundleEditor : Editor
+class CSA3_ObjectBundleEditor : UnityEditor.Editor
 {
     public override void OnInspectorGUI()
     {
