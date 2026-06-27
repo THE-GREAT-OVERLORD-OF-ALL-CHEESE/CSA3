@@ -118,11 +118,11 @@ namespace CheeseMods.CSA3
         {
             TaskInfo task = VTOLTaskProgressManager.RegisterTask(Main.instance, $"CSA3: Loading {Name}");
 
-            UnityEngine.Debug.Log($"CSA3: Trying to load {Name}");
+            Debug.Log($"CSA3: Trying to load {Name}");
 
             if (errors != LocalAssetBundleErrors.NoErrors)
             {
-                UnityEngine.Debug.Log($"CSA3: Refusing to load {Name} as it has errors...");
+                Debug.Log($"CSA3: Refusing to load {Name} as it has errors...");
                 task.FinishTask("Failed");
                 yield break;
             }
@@ -144,15 +144,20 @@ namespace CheeseMods.CSA3
                             yield break;
                         }
 
-                        UniTask<bool> loadResult = DependancyLoader.Load(result, dependancyTask);
+                        if (DependancyLoader.IsModloaded(result))
+                        {
+                            continue;
+                        }
+
+                        UniTask loadResult = DependancyLoader.Load(result, dependancyTask);
                         while (loadResult.Status != UniTaskStatus.Succeeded)
                         {
                             yield return null;
                         }
 
-                        if (loadResult.result)
+                        if (DependancyLoader.IsModloaded(result))
                         {
-                            UnityEngine.Debug.Log($"CSA3: Loaded dependancy {result}");
+                            Debug.Log($"CSA3: Loaded dependancy {result}");
                             dependancyTask.FinishTask();
                         }
                         else
@@ -226,7 +231,8 @@ namespace CheeseMods.CSA3
             task.SetStatus("Processing Assets");
             foreach (CSA3_CustomObject customObject in bundle.customObjects)
             {
-                ValidateAssets(customObject);
+                if (!ValidateAssets(customObject))
+                    continue;
 
                 BuiltMixerFixer.FixAudioSourcesInChildren(customObject.gameObject);
 
@@ -249,7 +255,7 @@ namespace CheeseMods.CSA3
                     VTResources.RegisterOverriddenResource(resourcePath, customObject.gameObject);
                     VTNetworkManager.RegisterOverrideResource(resourcePath, customObject.gameObject);
                     
-                    SetupTargetIdentity(customObject, unit);
+                    SetupTargetIdentity((CSA3_CustomUnit)customObject, unit);
                     
                     if (unit is AIUnitSpawnEquippable aiUnitSpawnEquippable)
                     {
@@ -363,7 +369,7 @@ namespace CheeseMods.CSA3
             return CustomObjectType.InvalidType;
         }
 
-        public void ValidateAssets(CSA3_CustomObject customObject)
+        public bool ValidateAssets(CSA3_CustomObject customObject)
         {
             if (customObject is CSA3_MapObject mapObjects)
             {
@@ -372,8 +378,9 @@ namespace CheeseMods.CSA3
                     ReportErrors(LocalAssetBundleErrors.MissingComponent,
                         $"A map object ({customObject.gameObject.name}) needs a {nameof(VTMapEdPrefab)} component attached, please add one in unity.",
                         Fault.BundleDev);
+                    return false;
                 }
-                return;
+                return true;
             }
             if (customObject is CSA3_StaticObject staticObject)
             {
@@ -382,8 +389,9 @@ namespace CheeseMods.CSA3
                     ReportErrors(LocalAssetBundleErrors.MissingComponent,
                         $"A static object ({customObject.gameObject.name}) needs a {nameof(VTStaticObject)} component attached, please add one in unity.",
                         Fault.BundleDev);
+                    return false;
                 }
-                return;
+                return true;
             }
             if (customObject is CSA3_CustomUnit customUnit)
             {
@@ -392,27 +400,30 @@ namespace CheeseMods.CSA3
                     ReportErrors(LocalAssetBundleErrors.MissingComponent,
                         $"A custom ({customObject.gameObject.name}) needs a {nameof(UnitSpawn)} component attached, please add one in unity.",
                         Fault.BundleDev);
+                    return false;
                 }
                 if (!customObject.gameObject.GetComponent<Actor>())
                 {
                     ReportErrors(LocalAssetBundleErrors.MissingComponent,
                         $"A custom ({customObject.gameObject.name}) needs an {nameof(Actor)} component attached, please add one in unity.",
                         Fault.BundleDev);
+                    return false;
                 }
-                return;
+                return true;
             }
 
             ReportErrors(LocalAssetBundleErrors.UnsupportedCustomAssetType,
                 $"Support for {customObject.GetType()} assets has not been added, beg me to add it on Discord.",
                 Fault.Cheese);
+            return false;
         }
         
-        private void SetupTargetIdentity(CSA3_CustomObject customObject, UnitSpawn unit)
+        private void SetupTargetIdentity(CSA3_CustomUnit customUnit, UnitSpawn unit)
         {
-            UnitIDIdentifier unitID = customObject.gameObject.GetComponent<UnitIDIdentifier>();
+            UnitIDIdentifier unitID = customUnit.gameObject.GetComponent<UnitIDIdentifier>();
             if (!unitID)
             {
-                unitID = customObject.gameObject.AddComponent<UnitIDIdentifier>();
+                unitID = customUnit.gameObject.AddComponent<UnitIDIdentifier>();
 
                 unitID.targetName = unit.unitName;
                 unitID.unitID = $"csa.{unit.name}";
@@ -435,18 +446,8 @@ namespace CheeseMods.CSA3
             }
 
             TargetIdentity targetIdentity = TargetIdentityManager.RegisterNonSpawnIdentity(unitID.unitID, unitID.targetName, unitID.role);
-            if (customObject is CSA3_CustomUnit customUnit)
-            {
-                try
-                {
-                    targetIdentity.index = customUnit.customUnitTargetIndex;
-                }
-                catch (Exception)
-                {
-                    ReportErrors(LocalAssetBundleErrors.OldDLLVersion, "Ask the Mod author to update their CSA3Components DLL in their Unity project", Fault.BundleDev);
-                    targetIdentity.index = 0;
-                }
-            }
+            targetIdentity.index = customUnit.customUnitTargetIndex;
+
             if (!TargetIdentityManager.indexedIdentities.Contains(targetIdentity))
                 TargetIdentityManager.indexedIdentities.Add(targetIdentity);
         }

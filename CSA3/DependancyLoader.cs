@@ -3,18 +3,24 @@ using Cysharp.Threading.Tasks;
 using SteamQueries.Models;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using UnityEngine;
 
 namespace CheeseMods.CSA3
 {
     public static class DependancyLoader
     {
-        public static async UniTask<bool> Load(ulong id, TaskInfo taskInfo)
+        public static bool IsModloaded(ulong id)
         {
-            if (ModLoader.ModLoader.Instance._loadedItems.Any(i => i.Value.Item.PublishFieldId == id))
+            return ModLoader.ModLoader.Instance._loadedItems.Any(i => i.Value.Item.PublishFieldId == id);
+        }
+
+        public static async UniTask Load(ulong id, TaskInfo taskInfo)
+        {
+            if (IsModloaded(id))
             {
                 Debug.Log($"CSA3: Mod {id} already loaded!");
-                return true;
+                return;
             }
 
             Debug.Log($"CSA3: Checking local mods for {id}");
@@ -29,14 +35,14 @@ namespace CheeseMods.CSA3
             if (item == null)
             {
                 Debug.Log($"CSA3: Couldn't find dependancy {id}, probably gonna cause problems...");
-                return false;
+                return;
             }
 
             Debug.Log($"CSA3: Loading dependancy {id}");
             taskInfo.SetStatus("Loading for dependancies...");
             taskInfo.SetProgress(0.9f);
             await ModLoader.ModLoader.Instance.LoadSteamItem(item);
-            return true;
+            return;
         }
 
         public static async UniTask<IReadOnlyCollection<SteamItem>> FindSteamItems(TaskInfo taskInfo)
@@ -52,21 +58,20 @@ namespace CheeseMods.CSA3
                 Debug.Log($"Searching mods: page {currentPage}");
                 taskInfo.SetStatus($"Searching mods: page {currentPage}");
                 taskInfo.SetProgress((1f - (1f/ currentPage)) * 0.9f);
-                UniTask<GetSubscribedItemsResponse> pageResults = ModLoader.SteamQuery.SteamQueries.Instance.GetSubscribedItems(currentPage);
-                await pageResults;
-                if (pageResults.result == null)
+                GetSubscribedItemsResponse pageResults = await ModLoader.SteamQuery.SteamQueries.Instance.GetSubscribedItems(currentPage);
+                if (pageResults == null)
                 {
                     Debug.Log("pageResults were null");
                     break;
                 }
 
-                if (!pageResults.result.HasValues)
+                if (!pageResults.HasValues)
                 {
                     Debug.Log("Get Subscribed Items didn't have any values");
                     break;
                 }
 
-                List<SteamItem> visibleItems = pageResults.result.Items;
+                List<SteamItem> visibleItems = pageResults.Items;
 
                 if (!visibleItems.Any())
                 {
