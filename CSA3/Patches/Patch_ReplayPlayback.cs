@@ -28,9 +28,8 @@ public class Patch_ReplayPlayback
                     continue;
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Console.WriteLine(e);
                 continue;
             }
             var gameObject = Object.Instantiate(replayPrefab);
