@@ -16,19 +16,19 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
-      <HintPath>..\..\..\..\Managed\0Harmony.dll</HintPath>
+      <HintPath>..\..\..\..\..\Managed\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp" Publicize="True">
       <HintPath>..\..\..\..\..\VTOLVR_Data\Managed\Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="Mod Loader" Publicize="True">
-      <HintPath>..\..\..\..\Managed\Mod Loader.dll</HintPath>
+      <HintPath>..\..\..\..\..\Managed\Mod Loader.dll</HintPath>
     </Reference>
     <Reference Include="ModLoader.Framework">
-      <HintPath>..\..\..\..\Managed\ModLoader.Framework.dll</HintPath>
+      <HintPath>..\..\..\..\..\Managed\ModLoader.Framework.dll</HintPath>
     </Reference>
     <Reference Include="SteamQueries.Models">
-      <HintPath>..\..\..\..\Managed\SteamQueries.Models.dll</HintPath>
+      <HintPath>..\..\..\..\..\Managed\SteamQueries.Models.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.AssetBundleModule">
       <HintPath>..\..\..\..\..\VTOLVR_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
