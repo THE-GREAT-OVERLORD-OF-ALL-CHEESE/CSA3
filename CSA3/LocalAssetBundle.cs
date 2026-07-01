@@ -293,6 +293,14 @@ namespace CheeseMods.CSA3
                         }
                     }
                 }
+                else if (customObjectType == CustomObjectType.CustomMissile)
+                {
+                    var missileComp = customObject.GetComponent<Missile>();
+                    var resourcePath = $"csa/missiles/{missileComp.gameObject.name}";
+                    VTResources.RegisterOverriddenResource(resourcePath, customObject.gameObject);
+                    VTNetworkManager.RegisterOverrideResource(resourcePath, customObject.gameObject);
+                    SetupTargetIdentity(customObject.gameObject);
+                }
             }
 
             Debug.Log($"CSA3: {Name} loaded!");
@@ -339,8 +347,6 @@ namespace CheeseMods.CSA3
         {
             if (bundle == null)
                 return null;
-
-
             switch (customObjectType)
             {
                 case CustomObjectType.StaticObject:
@@ -356,78 +362,77 @@ namespace CheeseMods.CSA3
 
         public static CustomObjectType GetCustomObjectType(CSA3_CustomObject customObject)
         {
-            if (customObject == null)
+            if (customObject is null)
                 return CustomObjectType.InvalidType;
             
-            if (customObject is CSA3_MapObject)
-                return CustomObjectType.MapObject;
-            if (customObject is CSA3_StaticObject)
-                return CustomObjectType.StaticObject;
-            if (customObject is CSA3_CustomUnit)
-                return CustomObjectType.CustomUnit;
-            
-            return CustomObjectType.InvalidType;
+            switch (customObject)
+            {
+                case CSA3_MapObject:
+                    return CustomObjectType.MapObject;
+                case CSA3_StaticObject:
+                    return CustomObjectType.StaticObject;
+                case CSA3_CustomUnit:
+                    return CustomObjectType.CustomUnit;
+                default:
+                    return CustomObjectType.InvalidType;
+            }
         }
 
         public bool ValidateAssets(CSA3_CustomObject customObject)
         {
-            if (customObject is CSA3_MapObject mapObjects)
+            switch (customObject)
             {
-                if (!customObject.gameObject.GetComponent<VTMapEdPrefab>())
-                {
+                case CSA3_MapObject when !customObject.gameObject.GetComponent<VTMapEdPrefab>():
                     ReportErrors(LocalAssetBundleErrors.MissingComponent,
                         $"A map object ({customObject.gameObject.name}) needs a {nameof(VTMapEdPrefab)} component attached, please add one in unity.",
                         Fault.BundleDev);
                     return false;
-                }
-                return true;
-            }
-            if (customObject is CSA3_StaticObject staticObject)
-            {
-                if (!customObject.gameObject.GetComponent<VTStaticObject>())
-                {
+                case CSA3_MapObject:
+                    return true;
+                case CSA3_StaticObject when !customObject.gameObject.GetComponent<VTStaticObject>():
                     ReportErrors(LocalAssetBundleErrors.MissingComponent,
                         $"A static object ({customObject.gameObject.name}) needs a {nameof(VTStaticObject)} component attached, please add one in unity.",
                         Fault.BundleDev);
                     return false;
-                }
-                return true;
-            }
-            if (customObject is CSA3_CustomUnit customUnit)
-            {
-                if (!customObject.gameObject.GetComponent<UnitSpawn>())
-                {
+                case CSA3_StaticObject:
+                    return true;
+                case CSA3_CustomUnit when !customObject.gameObject.GetComponent<UnitSpawn>():
                     ReportErrors(LocalAssetBundleErrors.MissingComponent,
                         $"A custom ({customObject.gameObject.name}) needs a {nameof(UnitSpawn)} component attached, please add one in unity.",
                         Fault.BundleDev);
                     return false;
-                }
-                if (!customObject.gameObject.GetComponent<Actor>())
-                {
+                case CSA3_CustomUnit when !customObject.gameObject.GetComponent<Actor>():
                     ReportErrors(LocalAssetBundleErrors.MissingComponent,
                         $"A custom ({customObject.gameObject.name}) needs an {nameof(Actor)} component attached, please add one in unity.",
                         Fault.BundleDev);
                     return false;
-                }
-                return true;
+                case CSA3_CustomUnit:
+                    return true;
+                case CSA3_CustomMissile when !customObject.GetComponent<Missile>():
+                    ReportErrors(LocalAssetBundleErrors.MissingComponent,
+                        $"A custom ({customObject.gameObject.name}) needs an {nameof(Missile)} component attached, please add one in unity.",
+                        Fault.BundleDev);
+                    return false;
+                case CSA3_CustomMissile:
+                    return true;
+                default:
+                    ReportErrors(LocalAssetBundleErrors.UnsupportedCustomAssetType,
+                        $"Support for {customObject.GetType()} assets has not been added, beg me to add it on Discord.",
+                        Fault.Cheese);
+                    return false;
             }
-
-            ReportErrors(LocalAssetBundleErrors.UnsupportedCustomAssetType,
-                $"Support for {customObject.GetType()} assets has not been added, beg me to add it on Discord.",
-                Fault.Cheese);
-            return false;
         }
         
-        private void SetupTargetIdentity(CSA3_CustomUnit customUnit, UnitSpawn unit)
+        private static void SetupTargetIdentity(CSA3_CustomUnit customUnit, UnitSpawn unit)
         {
-            UnitIDIdentifier unitID = customUnit.gameObject.GetComponent<UnitIDIdentifier>();
+            var unitID = customUnit.gameObject.GetComponent<UnitIDIdentifier>();
             if (!unitID)
             {
                 unitID = customUnit.gameObject.AddComponent<UnitIDIdentifier>();
 
                 unitID.targetName = unit.unitName;
                 unitID.unitID = $"csa.{unit.name}";
-                Actor.Roles role = Actor.Roles.Ground;
+                var role = Actor.Roles.Ground;
 
                 switch (unit.groupType)
                 {
@@ -445,16 +450,16 @@ namespace CheeseMods.CSA3
                 unitID.role = role;
             }
 
-            TargetIdentity targetIdentity = TargetIdentityManager.RegisterNonSpawnIdentity(unitID.unitID, unitID.targetName, unitID.role);
+            var targetIdentity = TargetIdentityManager.RegisterNonSpawnIdentity(unitID.unitID, unitID.targetName, unitID.role);
             targetIdentity.index = customUnit.customUnitTargetIndex;
 
             if (!TargetIdentityManager.indexedIdentities.Contains(targetIdentity))
                 TargetIdentityManager.indexedIdentities.Add(targetIdentity);
         }
 
-        private void SetupTargetIdentity(GameObject missile)
+        private static void SetupTargetIdentity(GameObject missile)
         {
-            UnitIDIdentifier unitID = missile.GetComponent<UnitIDIdentifier>();
+            var unitID = missile.GetComponent<UnitIDIdentifier>();
             if (!unitID)
             {
                 unitID = missile.gameObject.AddComponent<UnitIDIdentifier>();
@@ -465,7 +470,12 @@ namespace CheeseMods.CSA3
                 unitID.role = Actor.Roles.Missile;
             }
 
-            TargetIdentity targetIdentity = TargetIdentityManager.RegisterNonSpawnIdentity(unitID.unitID, unitID.targetName, unitID.role);
+            var targetIdentity = TargetIdentityManager.RegisterNonSpawnIdentity(unitID.unitID, unitID.targetName, unitID.role);
+            var customMissile = missile.GetComponent<CSA3_CustomMissile>();
+            if (customMissile)
+            {
+                targetIdentity.index = customMissile.customUnitTargetIndex;
+            }
             if (!TargetIdentityManager.indexedIdentities.Contains(targetIdentity))
                 TargetIdentityManager.indexedIdentities.Add(targetIdentity);
         }

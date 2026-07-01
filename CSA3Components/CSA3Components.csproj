@@ -45,6 +45,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CSA3_CustomMissile.cs" />
     <Compile Include="CSA3_Replacement.cs" />
     <Compile Include="CSA3_Dependency.cs" />
     <Compile Include="CSA3_MultiplayerCompatibility.cs" />
