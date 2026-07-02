@@ -9,7 +9,7 @@ namespace CheeseMods.CSA3Components
 
         [Tooltip("Display name of your asset")]
         public string displayName;
-        [Tooltip("Dd for uniquely identifying your asset. " + CSA3_BundleMetadata.namingRules)]
+        [Tooltip("Id for uniquely identifying your asset. " + CSA3_BundleMetadata.namingRules)]
         public string objectId;
         [TextArea]
         [Tooltip("Description of your asset")]

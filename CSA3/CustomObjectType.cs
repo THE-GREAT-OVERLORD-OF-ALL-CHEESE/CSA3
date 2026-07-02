@@ -5,6 +5,7 @@
         InvalidType,
         StaticObject,
         MapObject,
-        CustomUnit
+        CustomUnit,
+        CustomMissile,
     }
 }
