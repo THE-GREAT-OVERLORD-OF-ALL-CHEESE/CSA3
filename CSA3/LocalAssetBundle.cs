@@ -265,7 +265,7 @@ namespace CheeseMods.CSA3
                         
                         foreach (GameObject equipPrefab in aiUnitSpawnEquippable.equipPrefabs)
                         {
-                            if (equipPrefab == null)
+                            if (equipPrefab is null)
                             {
                                 ReportErrors(LocalAssetBundleErrors.MissingEquipment,
                                     $"AIUnitSpawn on {unit.name} has missing equipment prefabs",
@@ -295,8 +295,7 @@ namespace CheeseMods.CSA3
                 }
                 else if (customObjectType == CustomObjectType.CustomMissile)
                 {
-                    var missileComp = customObject.GetComponent<Missile>();
-                    var resourcePath = $"csa/missiles/{missileComp.gameObject.name}";
+                    var resourcePath = $"csa/missiles/{customObject.gameObject.name}";
                     VTResources.RegisterOverriddenResource(resourcePath, customObject.gameObject);
                     VTNetworkManager.RegisterOverrideResource(resourcePath, customObject.gameObject);
                     SetupTargetIdentity(customObject.gameObject);
