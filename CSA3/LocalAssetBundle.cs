@@ -146,6 +146,7 @@ namespace CheeseMods.CSA3
 
                         if (DependancyLoader.IsModloaded(result))
                         {
+                            dependancyTask.FinishTask("Already Loaded");
                             continue;
                         }
 
