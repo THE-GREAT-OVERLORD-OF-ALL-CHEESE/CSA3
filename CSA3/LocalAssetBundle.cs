@@ -430,7 +430,7 @@ namespace CheeseMods.CSA3
                 unitID = customUnit.gameObject.AddComponent<UnitIDIdentifier>();
 
                 unitID.targetName = unit.unitName;
-                unitID.unitID = $"csa.{unit.name}";
+                unitID.unitID = unit.name;
                 var role = Actor.Roles.Ground;
 
                 switch (unit.groupType)
