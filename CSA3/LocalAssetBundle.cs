@@ -373,6 +373,8 @@ namespace CheeseMods.CSA3
                     return CustomObjectType.StaticObject;
                 case CSA3_CustomUnit:
                     return CustomObjectType.CustomUnit;
+                case CSA3_CustomMissile:
+                    return CustomObjectType.CustomMissile;
                 default:
                     return CustomObjectType.InvalidType;
             }
