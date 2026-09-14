@@ -21,6 +21,37 @@ namespace CheeseMods.CSA3.Patches
         }
     }
 
+    [HarmonyPatch(typeof(VTResources), "GetAllStaticObjectInfos")]
+    class Patch_VTResources_GetAllStaticObjectInfos
+    {
+        [HarmonyPostfix]
+        static void Postfix(List<VTStaticObjectInfo> inoutList)
+        {
+            if (BaseAssetInfo.disableModdedObjects)
+            {
+                return;
+            }
+
+            foreach (CSA3_CustomObject customObject in AssetLoader.GetAllCustomObjects(CustomObjectType.StaticObject))
+            {
+                CSA3_StaticObject staticObject = customObject as CSA3_StaticObject;
+
+                Debug.Log(staticObject.name);
+                VTStaticObjectInfo info = new VTStaticObjectInfo
+                {
+                    itemType = VTStaticObjectInfo.ItemTypes.BuiltIn,
+                    id = staticObject.name,
+                    name = staticObject.displayName,
+                    description = staticObject.description,
+                    category = "CSA",
+                    editorOnly = false,
+                    mpOnly = false,
+                };
+                inoutList.Add(info);
+            }
+        }
+    }
+
     [HarmonyPatch(typeof(VTResources), "GetStaticObjectPrefab")]
     class Patch_VTResources_GetStaticObjectPrefab
     {
