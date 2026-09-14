@@ -42,7 +42,7 @@ namespace CheeseMods.CSA3.Patches
                 return true;
             }
             VTResources.LoadStaticObjectPrefabs();
-            if (VTResources.vtEditStaticObjectPrefabs.ContainsKey(id))
+            if (VTResources.vteditStaticObjectInfos.ContainsKey(id))
             {
                 // Asset was a CSO
                 __result = null;
